@@ -1,4 +1,4 @@
-.name: Build OrangeFox Recovery for Xiaomi 5s (capricorn)
+name: Build OrangeFox Recovery for Xiaomi 5s (capricorn)
 
 on:
   workflow_dispatch:
