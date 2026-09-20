@@ -1,0 +1,2 @@
+add_lunch_combo omni_capricorn-eng
+add_lunch_combo omni_capricorn-userdebug
