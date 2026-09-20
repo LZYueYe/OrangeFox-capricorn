@@ -1,0 +1,48 @@
+.name: Build OrangeFox Recovery for Xiaomi 5s (capricorn)
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-22.04
+    steps:
+    - name: Install dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y bc bison build-essential ccache curl flex g++-multilib gcc-multilib git gnupg gperf lib32ncurses5-dev lib32readline-dev lib32z1-dev liblz4-tool libncurses5-dev libsdl1.2-dev libxml2 libxml2-utils lzop schedtool squashfs-tools xsltproc zip zlib1g-dev libc6-dev-i386 libncurses5 x11proto-core-dev libx11-dev libgl1-mesa-dev tofrodos python3 python-is-python3
+
+    - name: Setup git and repo
+      run: |
+        mkdir -p ~/bin
+        curl -s https://storage.googleapis.com/git-repo-downloads/repo > ~/bin/repo
+        chmod a+x ~/bin/repo
+        git config --global user.name "Builder"
+        git config --global user.email "builder@local.com"
+        echo "$HOME/bin" >> $GITHUB_PATH
+
+    - name: Initialize OrangeFox source
+      run: |
+        mkdir -p ~/fox && cd ~/fox
+        repo init -u https://gitlab.com/OrangeFox/manifest.git -b fox_9.0 --depth=1
+        repo sync -c -j$(nproc --all) --force-sync --no-clone-bundle --no-tags
+
+    - name: Download capricorn device tree
+      run: |
+        cd ~/fox
+        git clone --depth=1 https://gitlab.com/miuipro.info-dev/android_device_xiaomi_capricorn.git device/xiaomi/capricorn
+        git clone --depth=1 -b android-8.0 https://github.com/TeamWin/android_device_qcom_common.git device/qcom/common
+
+    - name: Build OrangeFox Recovery
+      run: |
+        cd ~/fox
+        source build/envsetup.sh
+        lunch omni_capricorn-eng
+        mka recoveryimage -j$(nproc --all)
+
+    - name: Upload recovery image
+      uses: actions/upload-artifact@v4
+      with:
+        name: OrangeFox-capricorn-recovery
+        path: ~/fox/out/target/product/capricorn/recovery.img
+        retention-days: 30
